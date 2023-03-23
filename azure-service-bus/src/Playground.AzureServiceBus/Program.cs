@@ -1,7 +1,11 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using Azure.Messaging.ServiceBus;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Serilog.Events;
+using Microsoft.Extensions.Options;
+using Playground.AzureServiceBus.Queues;
 using Serilog;
+using Serilog.Events;
 
 namespace Playground.AzureServiceBus;
 
@@ -31,17 +35,49 @@ public sealed class Program
                 Environment.Version,
                 Environment.OSVersion);
 
-            var builder = Host.CreateDefaultBuilder(args)
-                              .ConfigureAppConfiguration(builder => SetupConfigurationBuilder(builder, args));
+            var builder = Host.CreateDefaultBuilder(args);
 
             builder.UseSerilog((context, serviceProvider, configuration) => configuration
                     .ReadFrom.Configuration(context.Configuration)
                     .ReadFrom.Services(serviceProvider));
 
             // add application services
-            // builder.ConfigureServices
+            builder.ConfigureServices((ctx, services) =>
+            {
+                services.AddOptions<AzureServiceBusSettings>()
+                    .Bind(ctx.Configuration.GetSection("AzureServiceBus"))
+                    .ValidateDataAnnotations()
+                    .ValidateOnStart();
+
+                services.AddSingleton(sp =>
+                {
+                    var settings = sp.GetRequiredService<IOptions<AzureServiceBusSettings>>();
+                    return new ServiceBusClient(settings.Value.ConnectionString);
+                });
+
+                services.AddSingleton<SimpleQueueProducer>();
+                services.AddHostedService(provider => provider.GetRequiredService<SimpleQueueProducer>());
+            });
 
             var host = builder.Build();
+
+            Task.Factory.StartNew(async () =>
+            {
+                SimpleQueueProducer? producer = null;
+                while (!Environment.HasShutdownStarted)
+                {
+                    var input = Console.ReadLine();
+                    if (string.IsNullOrEmpty(input))
+                        continue;
+
+                    producer ??= host.Services.GetRequiredService<SimpleQueueProducer>();
+
+                    Console.WriteLine($"Echo: {input}");
+
+                    await producer.PublishMessageAsync(input);
+                }
+            });
+
             host.Run();
 
             return 0;
