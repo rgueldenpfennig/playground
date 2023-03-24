@@ -18,12 +18,12 @@ internal class ConsoleCommandService : BackgroundService
     {
         return Task.Factory.StartNew(async () =>
         {
+            Console.WriteLine("Enter text to publish a message");
+
             while (!stoppingToken.IsCancellationRequested)
             {
                 if (_applicationLifetime.ApplicationStopping.IsCancellationRequested)
                     break;
-
-                Console.WriteLine("Enter text to publish a message:");
                 var input = Console.ReadLine();
 
                 if (_applicationLifetime.ApplicationStopping.IsCancellationRequested)
@@ -31,8 +31,6 @@ internal class ConsoleCommandService : BackgroundService
 
                 if (string.IsNullOrEmpty(input))
                     continue;
-
-                Console.WriteLine($"Echo: {input}");
 
                 await _simpleQueueProducer.PublishMessageAsync(input, stoppingToken);
             }

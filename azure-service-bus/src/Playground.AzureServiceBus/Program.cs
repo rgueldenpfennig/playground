@@ -56,6 +56,7 @@ public sealed class Program
                 });
 
                 services.AddSingleton<ISimpleQueueProducer, SimpleQueueProducer>();
+                services.AddHostedService<SimpleQueueConsumer>();
 
                 services.AddHostedService<ConsoleCommandService>();
             });
