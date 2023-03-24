@@ -1,17 +1,14 @@
-﻿using System.Threading.Channels;
-using Azure.Messaging.ServiceBus;
-using Microsoft.Extensions.Hosting;
+﻿using Azure.Messaging.ServiceBus;
 
 namespace Playground.AzureServiceBus.Queues;
 
 public interface ISimpleQueueProducer
 {
-    Task PublishMessageAsync(string message);
+    Task PublishMessageAsync(string message, CancellationToken cancellationToken);
 }
 
-internal class SimpleQueueProducer : BackgroundService, ISimpleQueueProducer, IAsyncDisposable
+internal class SimpleQueueProducer : ISimpleQueueProducer, IAsyncDisposable
 {
-    private readonly Channel<string> _channel = Channel.CreateUnbounded<string>();
     private readonly ServiceBusSender _serviceBusSender;
 
     public SimpleQueueProducer(ServiceBusClient serviceBusClient)
@@ -24,21 +21,9 @@ internal class SimpleQueueProducer : BackgroundService, ISimpleQueueProducer, IA
         _serviceBusSender = serviceBusClient.CreateSender("queue-simple");
     }
 
-    public Task PublishMessageAsync(string message)
+    public async Task PublishMessageAsync(string message, CancellationToken cancellationToken)
     {
-        return _channel.Writer.WriteAsync(message).AsTask();
-    }
-
-    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
-    {
-        while (!stoppingToken.IsCancellationRequested)
-        {
-            var message = await _channel.Reader.ReadAsync(stoppingToken);
-            if (message is not null)
-            {
-                await _serviceBusSender.SendMessageAsync(new ServiceBusMessage(message), stoppingToken);
-            }
-        }
+        await _serviceBusSender.SendMessageAsync(new ServiceBusMessage(message), cancellationToken);
     }
 
     public ValueTask DisposeAsync()

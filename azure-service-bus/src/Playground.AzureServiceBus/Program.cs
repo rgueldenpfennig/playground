@@ -55,29 +55,12 @@ public sealed class Program
                     return new ServiceBusClient(settings.Value.ConnectionString);
                 });
 
-                services.AddSingleton<SimpleQueueProducer>();
-                services.AddHostedService(provider => provider.GetRequiredService<SimpleQueueProducer>());
+                services.AddSingleton<ISimpleQueueProducer, SimpleQueueProducer>();
+
+                services.AddHostedService<ConsoleCommandService>();
             });
 
             var host = builder.Build();
-
-            Task.Factory.StartNew(async () =>
-            {
-                SimpleQueueProducer? producer = null;
-                while (!Environment.HasShutdownStarted)
-                {
-                    var input = Console.ReadLine();
-                    if (string.IsNullOrEmpty(input))
-                        continue;
-
-                    producer ??= host.Services.GetRequiredService<SimpleQueueProducer>();
-
-                    Console.WriteLine($"Echo: {input}");
-
-                    await producer.PublishMessageAsync(input);
-                }
-            });
-
             host.Run();
 
             return 0;
