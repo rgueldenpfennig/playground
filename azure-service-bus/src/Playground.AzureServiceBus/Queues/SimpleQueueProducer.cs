@@ -7,7 +7,7 @@ public interface ISimpleQueueProducer
     Task PublishMessageAsync(string message, CancellationToken cancellationToken);
 }
 
-internal class SimpleQueueProducer : ISimpleQueueProducer, IAsyncDisposable
+public class SimpleQueueProducer : ISimpleQueueProducer, IAsyncDisposable
 {
     private readonly ServiceBusSender _serviceBusSender;
 

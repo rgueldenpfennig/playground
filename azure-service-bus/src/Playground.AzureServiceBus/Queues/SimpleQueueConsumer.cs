@@ -5,7 +5,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Playground.AzureServiceBus.Queues;
 
-internal class SimpleQueueConsumer : BackgroundService
+public class SimpleQueueConsumer : BackgroundService
 {
     private readonly ServiceBusProcessor _processor;
     private readonly ILogger<SimpleQueueConsumer> _logger;

@@ -1,6 +1,6 @@
 {
   "profiles": {
-    "Playground.AzureServiceBus": {
+    "Playground.AzureServiceBus.Cli": {
       "commandName": "Project",
       "environmentVariables": {
         "DOTNET_ENVIRONMENT": "Development"

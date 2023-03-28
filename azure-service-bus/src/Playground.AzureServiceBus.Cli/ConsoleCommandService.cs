@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.Hosting;
 using Playground.AzureServiceBus.Queues;
 
-namespace Playground.AzureServiceBus;
+namespace Playground.AzureServiceBus.Cli;
 
 internal class ConsoleCommandService : BackgroundService
 {
