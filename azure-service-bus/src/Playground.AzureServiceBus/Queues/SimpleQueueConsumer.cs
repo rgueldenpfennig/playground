@@ -42,11 +42,20 @@ internal class SimpleQueueConsumer : BackgroundService
     private async Task OnProcessMessageAsync(ProcessMessageEventArgs args)
     {
         var memory = args.Message.Body.ToMemory();
+        var body = Encoding.UTF8.GetString(memory.Span);
 
         _logger.LogInformation("Receiving message created at {EnqueuedTime:s} ({Size} bytes)", args.Message.EnqueuedTime, memory.Length);
-        _logger.LogInformation("Body: {Body}", Encoding.UTF8.GetString(memory.Span));
+        _logger.LogInformation("Body: {Body}", body);
 
-        await args.CompleteMessageAsync(args.Message);
+        if (body.Equals("dead", StringComparison.OrdinalIgnoreCase))
+        {
+            _logger.LogInformation("Moving message to dead letter queue...");
+            await args.DeadLetterMessageAsync(args.Message);
+        }
+        else
+        {
+            await args.CompleteMessageAsync(args.Message);
+        }
     }
 
     private Task OnProcessErrorAsync(ProcessErrorEventArgs args)
