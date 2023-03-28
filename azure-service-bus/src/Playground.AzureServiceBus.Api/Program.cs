@@ -8,7 +8,7 @@ namespace Playground.AzureServiceBus.Api;
 
 public class Program
 {
-    public static int Main(string[] args)
+    public static async Task<int> Main(string[] args)
     {
         Log.Logger = new LoggerConfiguration()
             .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
@@ -64,6 +64,7 @@ public class Program
             }
 
             app.UseHttpsRedirection();
+            app.UseSerilogRequestLogging();
 
             var summaries = new[]
             {
@@ -85,7 +86,9 @@ public class Program
             .WithName("GetWeatherForecast")
             .WithOpenApi();
 
-            app.Run();
+            app.MapQueues();
+
+            await app.RunAsync();
             return 0;
         }
         catch (Exception ex)
